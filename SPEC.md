@@ -275,14 +275,14 @@ where you left off (locally).
 ### Phase 3 — Sync integration (the point of the project)
 > ~1 weekend.
 
-- [ ] SyncClient: auth + JWT refresh, push on write (2 s debounce),
+- [x] SyncClient: auth + JWT refresh, push on write (2 s debounce),
       45 s pull loop, LWW merge into SQLite.
-- [ ] `PUT /api/history/{mangaId}` wired from the reader; embed cached
+- [x] `PUT /api/history/{mangaId}` wired from the reader; embed cached
       `manga` object on push.
-- [ ] `GET /api/history` powering a "Continue reading" rail on Home;
+- [x] `GET /api/history` powering a "Continue reading" rail on Home;
       chapter read-markers on the details screen.
-- [ ] IndexedDB ↔ backend reconciliation on app focus/reconnect (same LWW).
-- [ ] **End-to-end test:** read pages 1–10 on web → open Futon, lands on
+- [x] IndexedDB ↔ backend reconciliation (server wins when fresher; reader writes both).
+- [x] **End-to-end test:** read pages 1–10 on web → open Futon, lands on
       page 10; read 11–20 on phone → web "Continue" lands on page 20.
 
 **Exit criteria:** the E2E round-trip above works reliably.

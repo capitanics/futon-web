@@ -4,6 +4,9 @@ import dev.futonweb.api.apiRoutes
 import dev.futonweb.db.CacheDb
 import dev.futonweb.parsers.ParsersService
 import dev.futonweb.parsers.WebMangaLoaderContext
+import dev.futonweb.sync.SyncClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
@@ -30,6 +33,20 @@ fun main() {
     val service = ParsersService(WebMangaLoaderContext(), db)
     log.info("futon-web starting on port $port with ${service.sources().size} sources")
 
+    val syncUrl = System.getenv("SYNC_SERVER_URL")
+    val syncEmail = System.getenv("SYNC_EMAIL")
+    val syncPassword = System.getenv("SYNC_PASSWORD")
+    val sync = if (!syncUrl.isNullOrBlank() && !syncEmail.isNullOrBlank() && !syncPassword.isNullOrBlank()) {
+        SyncClient(syncUrl.trimEnd('/'), syncEmail, syncPassword, db).also {
+            it.start(CoroutineScope(SupervisorJob()))
+            it.requestSync()
+            log.info("sync enabled against $syncUrl as $syncEmail")
+        }
+    } else {
+        log.warn("sync disabled: set SYNC_SERVER_URL, SYNC_EMAIL, SYNC_PASSWORD to enable")
+        null
+    }
+
     embeddedServer(Netty, port = port) {
         install(ContentNegotiation) {
             json(Json { explicitNulls = true })
@@ -51,7 +68,7 @@ fun main() {
             }
         }
         routing {
-            apiRoutes(service, db)
+            apiRoutes(service, db, sync)
         }
     }.start(wait = true)
 }

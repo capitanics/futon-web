@@ -56,22 +56,28 @@ export default function Reader() {
     [pages.data, chapterIndex, chapters, mangaId, navigate],
   )
 
-  // persist progress locally on every page turn (Phase 3 adds server sync)
+  // persist progress on every page turn: IndexedDB immediately (offline
+  // resume), server after a short debounce (feeds the sync client)
   useEffect(() => {
     const m = manga.data
     if (!m || !chapter || total === 0) return
     const chapterFraction = chapters.length > 0 ? (chapterIndex + (page + 1) / total) / chapters.length : 0
+    const percent = Math.min(1, chapterFraction)
     void saveProgress({
       mangaId: m.id,
       chapterId: chapter.id,
       page,
       scroll: 0,
-      percent: Math.min(1, chapterFraction),
+      percent,
       title: m.title,
       coverUrl: m.coverUrl,
       source: m.source,
       chapterLabel: chapterLabel(chapter),
     })
+    const t = setTimeout(() => {
+      void api.putProgress(m.id, { chapterId: chapter.id, page, scroll: 0, percent })
+    }, 1500)
+    return () => clearTimeout(t)
   }, [manga.data, chapter, chapters.length, chapterIndex, page, total])
 
   useEffect(() => {

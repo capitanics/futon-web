@@ -2,12 +2,15 @@ package dev.futonweb.api
 
 import dev.futonweb.db.CacheDb
 import dev.futonweb.parsers.ParsersService
+import dev.futonweb.sync.SyncClient
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
@@ -15,10 +18,60 @@ import okhttp3.Request
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.requireBody
 
-fun Route.apiRoutes(service: ParsersService, db: CacheDb) = route("/api") {
+fun Route.apiRoutes(service: ParsersService, db: CacheDb, sync: SyncClient?) = route("/api") {
 
     get("/health") {
-        call.respond(HealthDto(status = "ok", sources = service.sources().size))
+        call.respond(
+            HealthDto(
+                status = "ok",
+                sources = service.sources().size,
+                sync = SyncStatusDto(
+                    enabled = sync != null,
+                    lastSyncAt = sync?.lastSyncAt ?: 0,
+                    lastError = sync?.lastError,
+                ),
+            ),
+        )
+    }
+
+    get("/history") {
+        val entries = db.getAllHistory()
+            .filter { it.deletedAt == 0L }
+            .map { r ->
+                HistoryEntryDto(
+                    mangaId = r.mangaId.toString(),
+                    chapterId = r.chapterId.toString(),
+                    page = r.page,
+                    scroll = r.scroll,
+                    percent = r.percent,
+                    chapters = r.chapters,
+                    updatedAt = r.updatedAt,
+                    manga = db.getManga(r.mangaId)?.toDto(),
+                )
+            }
+        call.respond(entries)
+    }
+
+    put("/history/{mangaId}") {
+        val mangaId = call.parameters["mangaId"]!!.toLong()
+        val body = call.receive<ProgressUpdateDto>()
+        val existing = db.getHistory(mangaId)
+        val now = System.currentTimeMillis()
+        db.mergeHistory(
+            CacheDb.HistoryRecord(
+                mangaId = mangaId,
+                createdAt = existing?.createdAt ?: now,
+                updatedAt = now,
+                chapterId = body.chapterId.toLong(),
+                page = body.page,
+                scroll = body.scroll,
+                percent = body.percent,
+                chapters = existing?.chapters ?: -1,
+                deletedAt = 0,
+            ),
+        )
+        sync?.requestSync()
+        call.respond(HttpStatusCode.NoContent)
     }
 
     get("/sources") {

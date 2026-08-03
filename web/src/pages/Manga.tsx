@@ -18,11 +18,22 @@ export default function MangaPage() {
     queryKey: ['manga', mangaId],
     queryFn: () => api.manga(mangaId!),
   })
-  const [progress, setProgress] = useState<LocalHistory | undefined>()
+  const serverHistory = useQuery({ queryKey: ['history'], queryFn: api.history })
+  const [localProgress, setLocalProgress] = useState<LocalHistory | undefined>()
 
   useEffect(() => {
-    if (mangaId) getHistory(mangaId).then(setProgress)
+    if (mangaId) getHistory(mangaId).then(setLocalProgress)
   }, [mangaId])
+
+  // server history (merged with the phone) wins over the browser-local copy
+  // when it is fresher
+  const serverEntry = serverHistory.data?.find((h) => h.mangaId === mangaId)
+  const progress =
+    serverEntry && (!localProgress || serverEntry.updatedAt >= localProgress.updatedAt)
+      ? { chapterId: serverEntry.chapterId, page: serverEntry.page }
+      : localProgress
+        ? { chapterId: localProgress.chapterId, page: localProgress.page }
+        : undefined
 
   if (manga.isLoading) return <p className="hint">Loading…</p>
   if (manga.isError) return <p className="error">{(manga.error as Error).message}</p>

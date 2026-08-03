@@ -54,6 +54,17 @@ async function get<T>(url: string): Promise<T> {
   return res.json()
 }
 
+export interface HistoryEntry {
+  mangaId: string
+  chapterId: string
+  page: number
+  scroll: number
+  percent: number
+  chapters: number
+  updatedAt: number
+  manga: Manga | null
+}
+
 export const api = {
   sources: () => get<Source[]>('/api/sources'),
   browse: (source: string, query: string, offset = 0) =>
@@ -63,6 +74,16 @@ export const api = {
     ),
   manga: (id: string) => get<Manga>(`/api/manga/${id}`),
   pages: (chapterId: string) => get<Page[]>(`/api/chapters/${chapterId}/pages`),
+  history: () => get<HistoryEntry[]>('/api/history'),
+  putProgress: (
+    mangaId: string,
+    body: { chapterId: string; page: number; scroll: number; percent: number },
+  ) =>
+    fetch(`/api/history/${mangaId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
 }
 
 export function coverUrl(manga: Pick<Manga, 'coverUrl' | 'source'>): string | undefined {

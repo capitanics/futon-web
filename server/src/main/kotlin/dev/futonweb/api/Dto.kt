@@ -54,6 +54,34 @@ data class PageDto(
 data class HealthDto(
     val status: String,
     val sources: Int,
+    val sync: SyncStatusDto? = null,
+)
+
+@Serializable
+data class SyncStatusDto(
+    val enabled: Boolean,
+    val lastSyncAt: Long,
+    val lastError: String?,
+)
+
+@Serializable
+data class HistoryEntryDto(
+    val mangaId: String,
+    val chapterId: String,
+    val page: Int,
+    val scroll: Float,
+    val percent: Float,
+    val chapters: Int,
+    val updatedAt: Long,
+    val manga: MangaDto?,
+)
+
+@Serializable
+data class ProgressUpdateDto(
+    val chapterId: String,
+    val page: Int,
+    val scroll: Float = 0f,
+    val percent: Float = 0f,
 )
 
 fun MangaParserSource.toDto() = SourceDto(

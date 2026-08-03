@@ -57,8 +57,114 @@ class CacheDb(path: String) {
                 """.trimIndent(),
             )
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_chapters_manga ON chapters(manga_id, idx)")
+            st.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS history(
+                    manga_id INTEGER PRIMARY KEY,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    chapter_id INTEGER NOT NULL,
+                    page INTEGER NOT NULL,
+                    scroll REAL NOT NULL DEFAULT 0,
+                    percent REAL NOT NULL DEFAULT 0,
+                    chapters INTEGER NOT NULL DEFAULT -1,
+                    deleted_at INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent(),
+            )
+            // raw manga payloads seen from the sync server, replayed verbatim
+            // on push so we never degrade metadata (e.g. tags) we can't rebuild
+            st.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS sync_manga_json(manga_id INTEGER PRIMARY KEY, json TEXT NOT NULL)",
+            )
         }
     }
+
+    data class HistoryRecord(
+        val mangaId: Long,
+        val createdAt: Long,
+        val updatedAt: Long,
+        val chapterId: Long,
+        val page: Int,
+        val scroll: Float,
+        val percent: Float,
+        val chapters: Int,
+        val deletedAt: Long,
+    )
+
+    /** Last-writer-wins upsert. Returns true if the row changed. */
+    @Synchronized
+    fun mergeHistory(r: HistoryRecord): Boolean {
+        val existing = getHistory(r.mangaId)
+        if (existing != null && existing.updatedAt >= r.updatedAt) return false
+        conn.prepareStatement(
+            """
+            INSERT INTO history(manga_id, created_at, updated_at, chapter_id, page, scroll, percent, chapters, deleted_at)
+            VALUES(?,?,?,?,?,?,?,?,?)
+            ON CONFLICT(manga_id) DO UPDATE SET
+                created_at=excluded.created_at, updated_at=excluded.updated_at,
+                chapter_id=excluded.chapter_id, page=excluded.page, scroll=excluded.scroll,
+                percent=excluded.percent, chapters=excluded.chapters, deleted_at=excluded.deleted_at
+            """.trimIndent(),
+        ).use { ps ->
+            ps.setLong(1, r.mangaId)
+            ps.setLong(2, r.createdAt)
+            ps.setLong(3, r.updatedAt)
+            ps.setLong(4, r.chapterId)
+            ps.setInt(5, r.page)
+            ps.setFloat(6, r.scroll)
+            ps.setFloat(7, r.percent)
+            ps.setInt(8, r.chapters)
+            ps.setLong(9, r.deletedAt)
+            ps.executeUpdate()
+        }
+        return true
+    }
+
+    @Synchronized
+    fun getHistory(mangaId: Long): HistoryRecord? =
+        conn.prepareStatement("SELECT * FROM history WHERE manga_id=?").use { ps ->
+            ps.setLong(1, mangaId)
+            ps.executeQuery().use { rs -> if (rs.next()) rs.toHistoryRecord() else null }
+        }
+
+    @Synchronized
+    fun getAllHistory(): List<HistoryRecord> =
+        conn.prepareStatement("SELECT * FROM history ORDER BY updated_at DESC").use { ps ->
+            ps.executeQuery().use { rs ->
+                buildList { while (rs.next()) add(rs.toHistoryRecord()) }
+            }
+        }
+
+    @Synchronized
+    fun saveSyncMangaJson(mangaId: Long, json: String) {
+        conn.prepareStatement(
+            "INSERT INTO sync_manga_json(manga_id, json) VALUES(?,?) ON CONFLICT(manga_id) DO UPDATE SET json=excluded.json",
+        ).use { ps ->
+            ps.setLong(1, mangaId)
+            ps.setString(2, json)
+            ps.executeUpdate()
+        }
+    }
+
+    @Synchronized
+    fun getSyncMangaJson(mangaId: Long): String? =
+        conn.prepareStatement("SELECT json FROM sync_manga_json WHERE manga_id=?").use { ps ->
+            ps.setLong(1, mangaId)
+            ps.executeQuery().use { rs -> if (rs.next()) rs.getString(1) else null }
+        }
+
+    private fun ResultSet.toHistoryRecord() = HistoryRecord(
+        mangaId = getLong("manga_id"),
+        createdAt = getLong("created_at"),
+        updatedAt = getLong("updated_at"),
+        chapterId = getLong("chapter_id"),
+        page = getInt("page"),
+        scroll = getFloat("scroll"),
+        percent = getFloat("percent"),
+        chapters = getInt("chapters"),
+        deletedAt = getLong("deleted_at"),
+    )
 
     @Synchronized
     fun upsertManga(manga: Manga) {
