@@ -75,4 +75,25 @@ ruleset` / iptables) allows inbound 8080, and that both devices share the LAN.
 
 ## History payload fixtures
 
-_(pending first phone sync)_
+Captured 2026-08-03 from real phone sync (account `teste@teste.com`):
+`docs/fixtures/history-package.json` — 9 entries across 7 sources
+(MANGATOWN, MANGAGEKO, WEEBCENTRAL ×2, MANGACUTE ×2, YOMUMANGAS, LIKEMANGA),
+including one `deleted_at` tombstone (Vinland Saga on MANGAGEKO).
+
+### ID parity — VERIFIED with real data
+
+`docs/fixtures/check_id_parity.py` recomputes `generateUid(source.name +
+url)` (seed `1125899906842597`, 31·h+c over UTF-16 code units, 64-bit wrap)
+and compares with the synced `manga_id`: **8/9 exact matches**.
+
+The 9th (YOMUMANGAS, `manga_id=7`) is not a failure: that parser prefers the
+site API's own numeric series id over the URL hash
+(`YomuMangas.kt:436 — id = if (id > 0L) id else generateUid(url)`).
+Still content-derived and device-independent. Conclusion: IDs match across
+devices as long as both run the same parsers fork — confirmed design basis.
+
+⚠ Gotcha for anyone touching sync tooling: these ids exceed 2^53 — parsing
+the JSON with JavaScript `JSON.parse` (or `jq` in some builds) silently
+rounds them. Backend must keep them as Kotlin `Long`; any JS-side handling
+must treat ids as strings/BigInt. The SPA only ever passes ids through as
+opaque strings, so this is a backend/tooling concern.

@@ -155,6 +155,12 @@ Kotlin, Ktor, JDK 21. Modules:
 
 - **Static hosting** — serves the built SPA from `/`.
 
+  **ID serialization rule:** manga/chapter ids are 64-bit and exceed JS
+  `Number.MAX_SAFE_INTEGER` (verified with real data — see
+  `docs/notes.md`). The `/api` layer serializes all ids as **JSON strings**;
+  the SPA treats them as opaque strings end-to-end. Only the backend ever
+  parses them into `Long` (for parser calls and sync payloads).
+
 Config via env vars: `SYNC_SERVER_URL`, `SYNC_EMAIL`, `SYNC_PASSWORD`,
 `IMAGE_CACHE_DIR`, `IMAGE_CACHE_MAX_MB`, `DB_PATH`, `PORT`.
 
@@ -225,12 +231,12 @@ futon-web/
       JWT secret, `allow_new_register=true`.
 - [x] Confirm **Futon exposes a custom sync server setting** (verified in source: SyncHostDialogFragment, editable URL, plain HTTP ok) (Settings →
       Services/Synchronization). Point it at the server, create the account.
-- [ ] Read a chapter in Futon; confirm the row lands in MySQL `history`
+- [x] Read a chapter in Futon; confirm the row lands in MySQL `history`
       table and `GET /resource/history` (curl with JWT) returns it.
 - [x] Identify the **exact parsers dependency** (`com.github.clquwu:kotatsu-parsers-redo:f287c414a6` via JitPack) Futon uses (coordinates +
       version from Futon's `build.gradle` / version catalog) — record in
       `docs/notes.md`.
-- [ ] Capture 2–3 real history payloads in `docs/notes.md` as fixtures.
+- [x] Capture 2–3 real history payloads (9 entries, 7 sources, incl. tombstone) in `docs/notes.md` as fixtures.
 
 **Exit criteria:** phone syncs against our server; parsers artifact
 identified. If Futon has no sync UI → STOP and re-plan (fallbacks: upstream

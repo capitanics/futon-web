@@ -1,0 +1,500 @@
+{
+  "history": [
+    {
+      "manga_id": -6403263442366724120,
+      "manga": {
+        "manga_id": -6403263442366724120,
+        "title": "Blue Lock",
+        "alt_title": "",
+        "url": "/manga/blue_lock/",
+        "public_url": "https://www.mangatown.com/manga/blue_lock/",
+        "rating": 0.962,
+        "content_rating": null,
+        "cover_url": "https://fmcdn.mangahere.com/store/manga/32439/ocover.jpg?token=4748c7f964f908f535568ad5578aff72f1914b93&ttl=1783310400&v=1596463097",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -712367137386821301,
+            "title": "Sports",
+            "key": "sports",
+            "source": "MANGATOWN"
+          },
+          {
+            "tag_id": -4298569732337334462,
+            "title": "Action",
+            "key": "action",
+            "source": "MANGATOWN"
+          },
+          {
+            "tag_id": -7473124355567534647,
+            "title": "Drama",
+            "key": "drama",
+            "source": "MANGATOWN"
+          }
+        ],
+        "state": "ONGOING",
+        "author": "Kaneshiro Muneyuki",
+        "source": "MANGATOWN"
+      },
+      "created_at": 1783226039318,
+      "updated_at": 1785559183909,
+      "chapter_id": 1931181818807008375,
+      "page": 19,
+      "scroll": 0.0,
+      "percent": 0.99999994,
+      "chapters": 366,
+      "deleted_at": 0
+    },
+    {
+      "manga_id": -3866307091415016618,
+      "manga": {
+        "manga_id": -3866307091415016618,
+        "title": "Vinland Saga",
+        "alt_title": "Saga Winlandzka, Vinland Destanı, Vinrando Saga, Винланд дастаны, Сага о Винланде, Сага про Вінланд,",
+        "url": "/manga/vinland-saga-msd/",
+        "public_url": "https://www.mgeko.cc/manga/vinland-saga-msd/",
+        "rating": -1.0,
+        "content_rating": null,
+        "cover_url": "https://imgsrv4.com/avatar/288x412/media/manga_covers/WdxdrJBoecZGibqsOdJYXY48QvqMBkjuKk6OUIqMrk52eDSTIwL5L7JgZXwQJMco.jpg",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -8319367087018786302,
+            "title": "Seinen",
+            "key": "0",
+            "source": "MANGAGEKO"
+          }
+        ],
+        "state": "ONGOING",
+        "author": "Author: Yukimura Makoto",
+        "source": "MANGAGEKO"
+      },
+      "created_at": 1785721779281,
+      "updated_at": 1785721785538,
+      "chapter_id": -4528216635948318175,
+      "page": 5,
+      "scroll": 0.0,
+      "percent": 0.00031950584,
+      "chapters": 211,
+      "deleted_at": 1785721839686
+    },
+    {
+      "manga_id": -3549994418577630366,
+      "manga": {
+        "manga_id": -3549994418577630366,
+        "title": "Vinland Saga",
+        "alt_title": "",
+        "url": "01J76XY7FQY59WRK2YWX5T4E5N",
+        "public_url": "https://weebcentral.com/series/01J76XY7FQY59WRK2YWX5T4E5N",
+        "rating": -1.0,
+        "content_rating": "SUGGESTIVE",
+        "cover_url": "https://temp.compsci88.com/cover/fallback/01J76XY7FQY59WRK2YWX5T4E5N.jpg",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -2714509809043626000,
+            "title": "Seinen",
+            "key": "Seinen",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -5258432265133027379,
+            "title": "Drama",
+            "key": "Drama",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 2328903121683616118,
+            "title": "Adventure",
+            "key": "Adventure",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -4371068122046734788,
+            "title": "Tragedy",
+            "key": "Tragedy",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 1626702333414856216,
+            "title": "Mature",
+            "key": "Mature",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 1999080417251285830,
+            "title": "Action",
+            "key": "Action",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -7406459469966847654,
+            "title": "Historical",
+            "key": "Historical",
+            "source": "WEEBCENTRAL"
+          }
+        ],
+        "state": "FINISHED",
+        "author": "YUKIMURA Makoto",
+        "source": "WEEBCENTRAL"
+      },
+      "created_at": 1785721792905,
+      "updated_at": 1785721819350,
+      "chapter_id": -1417333635545595564,
+      "page": 9,
+      "scroll": 0.0,
+      "percent": 0.00050958013,
+      "chapters": 223,
+      "deleted_at": 0
+    },
+    {
+      "manga_id": -465175580809092688,
+      "manga": {
+        "manga_id": -465175580809092688,
+        "title": "Jujutsu Kaisen Modulo",
+        "alt_title": "Jujutsu Kaisen Mojuro",
+        "url": "/jujutsu-kaisen-modulo",
+        "public_url": "https://mangacute.com/jujutsu-kaisen-modulo",
+        "rating": 0.9,
+        "content_rating": "SAFE",
+        "cover_url": "https://res.mbbcdn.com/thumb/jujutsu-kaisen-modulo.png",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -2105123765855633557,
+            "title": "Supernatural",
+            "key": "supernatural",
+            "source": "MANGACUTE"
+          },
+          {
+            "tag_id": -4298569732337835245,
+            "title": "Action",
+            "key": "action",
+            "source": "MANGACUTE"
+          },
+          {
+            "tag_id": -1009022674308569433,
+            "title": "Manga ",
+            "key": "manga",
+            "source": "MANGACUTE"
+          }
+        ],
+        "state": "ONGOING",
+        "author": "",
+        "source": "MANGACUTE"
+      },
+      "created_at": 1769787353577,
+      "updated_at": 1772368802848,
+      "chapter_id": -5651040709722671743,
+      "page": 20,
+      "scroll": 0.0,
+      "percent": 0.96,
+      "chapters": 24,
+      "deleted_at": 1785720985323
+    },
+    {
+      "manga_id": 7,
+      "manga": {
+        "manga_id": 7,
+        "title": "MONSTER",
+        "alt_title": "",
+        "url": "/mangas/7/monster",
+        "public_url": "https://yomumangas.com/mangas/7/monster",
+        "rating": -1.0,
+        "content_rating": "ADULT",
+        "cover_url": "https://b2.yomumangas.com/mangas/7/cover.avif?v=3",
+        "large_cover_url": "https://b2.yomumangas.com/mangas/7/cover.avif?v=3",
+        "tags": [
+          {
+            "tag_id": -7862733443177792936,
+            "title": "Suspense",
+            "key": "10",
+            "source": "YOMUMANGAS"
+          },
+          {
+            "tag_id": 430591966231724014,
+            "title": "Drama",
+            "key": "3",
+            "source": "YOMUMANGAS"
+          },
+          {
+            "tag_id": 557634350713748169,
+            "title": "Psicológico",
+            "key": "8",
+            "source": "YOMUMANGAS"
+          },
+          {
+            "tag_id": 583042827610153000,
+            "title": "Mistério",
+            "key": "9",
+            "source": "YOMUMANGAS"
+          }
+        ],
+        "state": "FINISHED",
+        "author": "Dirce Miyamura\nLes Travaux d'Hercule\nThibaud Desbief\nAnne Bidaul",
+        "source": "YOMUMANGAS"
+      },
+      "created_at": 1785721664968,
+      "updated_at": 1785721673601,
+      "chapter_id": 25801,
+      "page": 5,
+      "scroll": 0.0,
+      "percent": 0.0011947431,
+      "chapters": 162,
+      "deleted_at": 1785721839686
+    },
+    {
+      "manga_id": 2114267046252329713,
+      "manga": {
+        "manga_id": 2114267046252329713,
+        "title": "One Piece",
+        "alt_title": "ワンピース (Japanese); 海盗路飞; 海贼王 ; 航海王 (Chinese); 원피스 (Korean); ون بيس; وان پیس (Arabic); Đảo Hải Tặc (Vi",
+        "url": "/one-piece-7701/",
+        "public_url": "https://likemanga.ink/one-piece-7701/",
+        "rating": -1.0,
+        "content_rating": null,
+        "cover_url": "https://likemanga.ink/upload/pages/2023/09/1693649068-64f308ac0ff99-onepiece.jpg",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": 1178613002952989013,
+            "title": "Shounen",
+            "key": "shounen",
+            "source": "LIKEMANGA"
+          },
+          {
+            "tag_id": -3085627699694912996,
+            "title": "Comedy",
+            "key": "comedy",
+            "source": "LIKEMANGA"
+          },
+          {
+            "tag_id": -4298570367836713607,
+            "title": "Action",
+            "key": "action",
+            "source": "LIKEMANGA"
+          },
+          {
+            "tag_id": -2466720641584712897,
+            "title": "Fantasy",
+            "key": "fantasy",
+            "source": "LIKEMANGA"
+          },
+          {
+            "tag_id": 4788505728290065385,
+            "title": "Adventure",
+            "key": "adventure",
+            "source": "LIKEMANGA"
+          },
+          {
+            "tag_id": -7473124991066913792,
+            "title": "Drama",
+            "key": "drama",
+            "source": "LIKEMANGA"
+          }
+        ],
+        "state": null,
+        "author": "Updating",
+        "source": "LIKEMANGA"
+      },
+      "created_at": 1759197225163,
+      "updated_at": 1760479077507,
+      "chapter_id": -6454294057042789883,
+      "page": 10,
+      "scroll": 0.0,
+      "percent": 0.9988707,
+      "chapters": 1198,
+      "deleted_at": 0
+    },
+    {
+      "manga_id": 2239446241486207480,
+      "manga": {
+        "manga_id": 2239446241486207480,
+        "title": "Demon Slayer - Kimetsu no Yaiba",
+        "alt_title": "",
+        "url": "01J76XYBPP2A7D38XGF4PSQVPD",
+        "public_url": "https://weebcentral.com/series/01J76XYBPP2A7D38XGF4PSQVPD",
+        "rating": -1.0,
+        "content_rating": "SUGGESTIVE",
+        "cover_url": "https://temp.compsci88.com/cover/fallback/01J76XYBPP2A7D38XGF4PSQVPD.jpg",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -5258432265133027379,
+            "title": "Drama",
+            "key": "Drama",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 2328903121683616118,
+            "title": "Adventure",
+            "key": "Adventure",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -4371068122046734788,
+            "title": "Tragedy",
+            "key": "Tragedy",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 1999080417251285830,
+            "title": "Action",
+            "key": "Action",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -1558714203316473012,
+            "title": "Fantasy",
+            "key": "Fantasy",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -7406459469966847654,
+            "title": "Historical",
+            "key": "Historical",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 7351931991450378498,
+            "title": "Martial Arts",
+            "key": "Martial Arts",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": 82316577508682142,
+            "title": "Supernatural",
+            "key": "Supernatural",
+            "source": "WEEBCENTRAL"
+          },
+          {
+            "tag_id": -3274455807399744542,
+            "title": "Shounen",
+            "key": "Shounen",
+            "source": "WEEBCENTRAL"
+          }
+        ],
+        "state": "FINISHED",
+        "author": "GOTOUGE Koyoharu",
+        "source": "WEEBCENTRAL"
+      },
+      "created_at": 1785721908080,
+      "updated_at": 1785721933049,
+      "chapter_id": -4044124396385557454,
+      "page": 9,
+      "scroll": 0.0,
+      "percent": 0.00081300817,
+      "chapters": 205,
+      "deleted_at": 0
+    },
+    {
+      "manga_id": 5252522510671003985,
+      "manga": {
+        "manga_id": 5252522510671003985,
+        "title": "Hajime no Ippo",
+        "alt_title": "",
+        "url": "/manga/hajime_no_ippo/",
+        "public_url": "https://www.mangatown.com/manga/hajime_no_ippo/",
+        "rating": 0.936,
+        "content_rating": null,
+        "cover_url": "https://fmcdn.mangahere.com/store/manga/231/ocover.jpg?token=24fa0205e26e567e0a28d1586063d3eb677805a1&ttl=1779328800&v=1480498331",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -7473124355567534647,
+            "title": "Drama",
+            "key": "drama",
+            "source": "MANGATOWN"
+          },
+          {
+            "tag_id": -3085627064195533851,
+            "title": "Comedy",
+            "key": "comedy",
+            "source": "MANGATOWN"
+          },
+          {
+            "tag_id": -712367137386821301,
+            "title": "Sports",
+            "key": "sports",
+            "source": "MANGATOWN"
+          },
+          {
+            "tag_id": -4298569732337334462,
+            "title": "Action",
+            "key": "action",
+            "source": "MANGATOWN"
+          }
+        ],
+        "state": "ONGOING",
+        "author": "Morikawa Jyoji",
+        "source": "MANGATOWN"
+      },
+      "created_at": 1779244315361,
+      "updated_at": 1785786711628,
+      "chapter_id": 5155385781502118449,
+      "page": 4,
+      "scroll": 0.0,
+      "percent": 0.35415298,
+      "chapters": 1520,
+      "deleted_at": 0
+    },
+    {
+      "manga_id": 6667832129479502514,
+      "manga": {
+        "manga_id": 6667832129479502514,
+        "title": "Hajime no Ippo",
+        "alt_title": "ç¬¬ä¸€ç¥žæ‹³",
+        "url": "/hajime-no-ippo",
+        "public_url": "https://mangacute.com/hajime-no-ippo",
+        "rating": 0.84,
+        "content_rating": "SAFE",
+        "cover_url": "https://res.mbbcdn.com/thumb/hajime-no-ippo.png",
+        "large_cover_url": "",
+        "tags": [
+          {
+            "tag_id": -712367137387322084,
+            "title": "Sports",
+            "key": "sports",
+            "source": "MANGACUTE"
+          },
+          {
+            "tag_id": -3085627064196034634,
+            "title": "Comedy",
+            "key": "comedy",
+            "source": "MANGACUTE"
+          },
+          {
+            "tag_id": -4298569732337835245,
+            "title": "Action",
+            "key": "action",
+            "source": "MANGACUTE"
+          },
+          {
+            "tag_id": 1178613638451867375,
+            "title": "Shounen",
+            "key": "shounen",
+            "source": "MANGACUTE"
+          },
+          {
+            "tag_id": -7473124355568035430,
+            "title": "Drama",
+            "key": "drama",
+            "source": "MANGACUTE"
+          }
+        ],
+        "state": "ONGOING",
+        "author": "",
+        "source": "MANGACUTE"
+      },
+      "created_at": 1762143222081,
+      "updated_at": 1778273374736,
+      "chapter_id": -5732600014782752618,
+      "page": 14,
+      "scroll": 0.0,
+      "percent": 0.30463684,
+      "chapters": 1542,
+      "deleted_at": 1785720985324
+    }
+  ],
+  "timestamp": 1785786770837
+}
