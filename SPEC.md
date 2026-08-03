@@ -245,13 +245,13 @@ Kotatsu app, or backup-file import — decide then).
 ### Phase 1 — Backend core: parsers online
 > ~1 weekend.
 
-- [ ] Gradle project, Ktor skeleton, pinned parsers dependency from Phase 0.
-- [ ] `MangaLoaderContext` implementation (OkHttp, cookie jar, kotlinx-serialization).
-- [ ] Endpoints: `/api/sources`, `/api/sources/{name}/manga`,
+- [x] Gradle project, Ktor skeleton, pinned parsers dependency from Phase 0.
+- [x] `MangaLoaderContext` implementation (OkHttp, cookie jar, Nashorn for JS).
+- [x] Endpoints: `/api/sources`, `/api/sources/{name}/manga`,
       `/api/manga/{id}`, `/api/chapters/{id}/pages`, `/api/health`.
-- [ ] SQLite CacheDB with `manga` + `chapters` upsert on every `getDetails`.
-- [ ] ImageProxy with Referer forwarding + disk LRU cache.
-- [ ] Verify ID parity: for one manga, assert backend-computed `manga_id`
+- [x] SQLite CacheDB with `manga` + `chapters` upsert on every `getDetails`.
+- [x] ImageProxy with Referer forwarding (disk LRU cache deferred to Phase 4/5).
+- [x] Verify ID parity: for one manga, assert backend-computed `manga_id`
       equals the value Futon synced in Phase 0 for the same title/source.
       **This test gates the whole sync design.**
 

@@ -8,3 +8,4 @@ build/
 .gradle/
 *.jar
 data/
+futon-web.db
