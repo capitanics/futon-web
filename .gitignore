@@ -1,0 +1,10 @@
+.env
+*.log
+.idea/
+.vscode/
+node_modules/
+dist/
+build/
+.gradle/
+*.jar
+data/
