@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api, type Chapter, type Page } from '../api'
 import { saveProgress } from '../db'
 import { getReaderSettings, saveReaderSettings, type ReaderSettings } from '../settings'
+import { useFullscreen } from '../useFullscreen'
 import { chapterLabel } from './Manga'
 
 export default function Reader() {
@@ -19,6 +20,7 @@ export default function Reader() {
   const [sheet, setSheet] = useState<'none' | 'settings' | 'chapters'>('none')
   const [failed, setFailed] = useState<Record<number, boolean>>({})
   const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const fullscreen = useFullscreen()
 
   const manga = useQuery({ queryKey: ['manga', mangaId], queryFn: () => api.manga(mangaId!) })
   const pages = useQuery({ queryKey: ['pages', chapterId], queryFn: () => api.pages(chapterId!) })
@@ -114,6 +116,8 @@ export default function Reader() {
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault()
         goTo(rtl ? page + 1 : page - 1)
+      } else if (e.key === 'f') {
+        fullscreen.toggle()
       } else if (e.key === 'Escape') {
         if (sheet !== 'none') setSheet('none')
         else navigate(`/manga/${mangaId}`)
@@ -121,7 +125,7 @@ export default function Reader() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goTo, page, rtl, mangaId, navigate, sheet])
+  }, [goTo, page, rtl, mangaId, navigate, sheet, fullscreen])
 
   // swipe left/right turns pages (paged modes); direction-aware like taps
   const onTouchStartStage = (e: React.TouchEvent) => {
@@ -291,6 +295,15 @@ export default function Reader() {
         >
           ⏭
         </button>
+        {fullscreen.supported && (
+          <button
+            className="icon-button"
+            aria-label={fullscreen.isFullscreen ? 'Exit full screen' : 'Full screen'}
+            onClick={fullscreen.toggle}
+          >
+            {fullscreen.isFullscreen ? '🗗' : '⛶'}
+          </button>
+        )}
         <button
           className="icon-button"
           aria-label="Chapter list"

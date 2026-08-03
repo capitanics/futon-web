@@ -1,0 +1,23 @@
+{
+  "name": "futon-web",
+  "short_name": "futonweb",
+  "description": "Personal manga reader, synced with Futon",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0f13",
+  "theme_color": "#0e0f13",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

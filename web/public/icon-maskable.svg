@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <rect width="96" height="96" fill="#0e0f13"/>
+  <circle cx="48" cy="48" r="26" fill="#e8543f" transform="rotate(-8 48 48)"/>
+  <text x="48" y="58" font-family="serif" font-size="28" font-weight="700" fill="#0e0f13" text-anchor="middle">布</text>
+</svg>
