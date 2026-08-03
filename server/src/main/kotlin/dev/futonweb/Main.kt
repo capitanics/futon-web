@@ -27,7 +27,10 @@ data class ErrorDto(val error: String)
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8081
     val dbPath = System.getenv("DB_PATH") ?: "futon-web.db"
+    val imageCacheDir = System.getenv("IMAGE_CACHE_DIR") ?: "image-cache"
+    val imageCacheMaxMb = System.getenv("IMAGE_CACHE_MAX_MB")?.toLongOrNull() ?: 2048
     val log = LoggerFactory.getLogger("futon-web")
+    val images = ImageCache(java.io.File(imageCacheDir), imageCacheMaxMb * 1024 * 1024)
 
     val db = CacheDb(dbPath)
     val service = ParsersService(WebMangaLoaderContext(), db)
@@ -68,7 +71,7 @@ fun main() {
             }
         }
         routing {
-            apiRoutes(service, db, sync)
+            apiRoutes(service, db, sync, images)
         }
     }.start(wait = true)
 }

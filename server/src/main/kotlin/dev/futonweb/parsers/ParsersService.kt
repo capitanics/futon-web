@@ -1,6 +1,10 @@
 package dev.futonweb.parsers
 
 import dev.futonweb.db.CacheDb
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.MangaParser
 import org.koitharu.kotatsu.parsers.model.Manga
@@ -9,6 +13,7 @@ import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.SortOrder
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class ParsersService(
@@ -47,12 +52,38 @@ class ParsersService(
         return result
     }
 
+    private val log = LoggerFactory.getLogger("parsers")
+    private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val refreshing = ConcurrentHashMap.newKeySet<Long>()
+
     suspend fun details(mangaId: Long): Manga {
         val skeleton = db.getManga(mangaId)
             ?: throw NoSuchElementException("Manga $mangaId is not cached; browse it from its source first")
         val details = parser(skeleton.source as MangaParserSource).getDetails(skeleton)
         db.upsertManga(details)
         return details
+    }
+
+    /** Cached copy if we have chapters for it, else null. */
+    fun cachedDetails(mangaId: Long): Manga? {
+        val manga = db.getManga(mangaId) ?: return null
+        val chapters = db.getChapters(mangaId)
+        if (chapters.isEmpty()) return null
+        return manga.copy(chapters = chapters)
+    }
+
+    /** Refresh details from the source in the background, deduplicated. */
+    fun refreshDetailsAsync(mangaId: Long) {
+        if (!refreshing.add(mangaId)) return
+        refreshScope.launch {
+            try {
+                details(mangaId)
+            } catch (e: Exception) {
+                log.warn("background refresh of $mangaId failed: ${e.message}")
+            } finally {
+                refreshing.remove(mangaId)
+            }
+        }
     }
 
     suspend fun pages(chapterId: Long): List<MangaPage> {
@@ -64,12 +95,19 @@ class ParsersService(
         return pages
     }
 
+    // getPageUrl can itself be a network call (html page -> img src);
+    // resolve each page once per process
+    private val pageUrlCache = ConcurrentHashMap<Long, String>()
+
     suspend fun pageImageUrl(chapterId: Long, index: Int): Pair<String, MangaParserSource> {
         val pages = pages(chapterId)
         val page = pages.getOrNull(index)
             ?: throw NoSuchElementException("Chapter $chapterId has no page $index")
         val source = page.source as MangaParserSource
-        return parser(source).getPageUrl(page) to source
+        pageUrlCache[page.id]?.let { return it to source }
+        val url = parser(source).getPageUrl(page)
+        pageUrlCache[page.id] = url
+        return url to source
     }
 
     fun chapter(chapterId: Long): MangaChapter? = db.getChapter(chapterId)

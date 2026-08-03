@@ -16,8 +16,9 @@ export default function Reader() {
   const [settings, setSettings] = useState<ReaderSettings>(() => getReaderSettings(mangaId!))
   const [page, setPage] = useState(initialPage)
   const [showUi, setShowUi] = useState(true)
-  const [showSettings, setShowSettings] = useState(false)
+  const [sheet, setSheet] = useState<'none' | 'settings' | 'chapters'>('none')
   const [failed, setFailed] = useState<Record<number, boolean>>({})
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
 
   const manga = useQuery({ queryKey: ['manga', mangaId], queryFn: () => api.manga(mangaId!) })
   const pages = useQuery({ queryKey: ['pages', chapterId], queryFn: () => api.pages(chapterId!) })
@@ -32,10 +33,15 @@ export default function Reader() {
   const chapterIndex = chapters.findIndex((c) => c.id === chapterId)
   const total = pages.data?.length ?? 0
   const rtl = settings.mode === 'rtl'
+  const percentNow =
+    chapters.length > 0 && total > 0
+      ? Math.min(1, (chapterIndex + (page + 1) / total) / chapters.length)
+      : 0
 
   useEffect(() => {
     setPage(Number(params.get('page') ?? 0) || 0)
     setFailed({})
+    setSheet('none')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapterId])
 
@@ -79,24 +85,22 @@ export default function Reader() {
   useEffect(() => {
     const m = manga.data
     if (!m || !chapter || total === 0) return
-    const fraction = chapters.length > 0 ? (chapterIndex + (page + 1) / total) / chapters.length : 0
-    const percent = Math.min(1, fraction)
     void saveProgress({
       mangaId: m.id,
       chapterId: chapter.id,
       page,
       scroll: 0,
-      percent,
+      percent: percentNow,
       title: m.title,
       coverUrl: m.coverUrl,
       source: m.source,
       chapterLabel: chapterLabel(chapter),
     })
     const t = setTimeout(() => {
-      void api.putProgress(m.id, { chapterId: chapter.id, page, scroll: 0, percent })
+      void api.putProgress(m.id, { chapterId: chapter.id, page, scroll: 0, percent: percentNow })
     }, 1500)
     return () => clearTimeout(t)
-  }, [manga.data, chapter, chapters.length, chapterIndex, page, total])
+  }, [manga.data, chapter, page, total, percentNow])
 
   // keyboard: arrows follow reading direction, space always advances
   useEffect(() => {
@@ -111,12 +115,30 @@ export default function Reader() {
         e.preventDefault()
         goTo(rtl ? page + 1 : page - 1)
       } else if (e.key === 'Escape') {
-        navigate(`/manga/${mangaId}`)
+        if (sheet !== 'none') setSheet('none')
+        else navigate(`/manga/${mangaId}`)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goTo, page, rtl, mangaId, navigate])
+  }, [goTo, page, rtl, mangaId, navigate, sheet])
+
+  // swipe left/right turns pages (paged modes); direction-aware like taps
+  const onTouchStartStage = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+  }
+  const onTouchEndStage = (e: React.TouchEvent) => {
+    const start = touchStart.current
+    touchStart.current = null
+    if (!start) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy)) return
+    if (dx < 0) goTo(rtl ? page - 1 : page + 1)
+    else goTo(rtl ? page + 1 : page - 1)
+  }
 
   // preload neighbours (paged mode)
   useEffect(() => {
@@ -131,18 +153,19 @@ export default function Reader() {
 
   // near the end of the chapter: prefetch the next one
   useEffect(() => {
-    if (!pages.data || total === 0) return
-    if (page / total < 0.8) return
+    if (!pages.data || total === 0 || page / total < 0.8) return
     const next = chapters[chapterIndex + 1]
     if (!next) return
     void queryClient
       .prefetchQuery({ queryKey: ['pages', next.id], queryFn: () => api.pages(next.id) })
       .then(() => {
-        const prefetched = queryClient.getQueryData<Page[]>(['pages', next.id])
-        prefetched?.slice(0, 3).forEach((p) => {
-          const img = new Image()
-          img.src = p.imageUrl
-        })
+        queryClient
+          .getQueryData<Page[]>(['pages', next.id])
+          ?.slice(0, 3)
+          .forEach((p) => {
+            const img = new Image()
+            img.src = p.imageUrl
+          })
       })
   }, [page, total, chapters, chapterIndex, pages.data, queryClient])
 
@@ -164,6 +187,7 @@ export default function Reader() {
       <div className="reader">
         <div className="reader-message">
           <span className="loader" aria-label="Loading pages" />
+          <p className="hint">Fetching pages from the source…</p>
         </div>
       </div>
     )
@@ -176,73 +200,16 @@ export default function Reader() {
           ‹
         </Link>
         <div className="reader-title">
-          <span className="reader-manga">{manga.data.title}</span>
-          <select
-            className="reader-chapter-select"
-            value={chapterId}
-            onChange={(e) => {
-              const ch = chapters.find((c) => c.id === e.target.value)
-              if (ch) openChapter(ch)
-            }}
-          >
-            {chapters.map((ch) => (
-              <option key={ch.id} value={ch.id}>
-                {chapterLabel(ch)}
-              </option>
-            ))}
-          </select>
+          <span className="reader-manga-title">{manga.data.title}</span>
+          <span className="reader-chapter-label">{chapter ? chapterLabel(chapter) : ''}</span>
         </div>
-        <button
-          className="icon-button"
-          aria-label="Reader settings"
-          onClick={() => setShowSettings((v) => !v)}
-        >
-          ⚙
-        </button>
       </header>
 
-      {showSettings && (
-        <div className="reader-settings" role="dialog" aria-label="Reader settings">
-          <div className="setting-group">
-            <span>Mode</span>
-            <div className="segmented">
-              {(
-                [
-                  ['rtl', 'Manga ⇠'],
-                  ['ltr', '⇢ Comic'],
-                  ['webtoon', 'Webtoon ↓'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  className={settings.mode === value ? 'on' : ''}
-                  onClick={() => changeSettings({ mode: value })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="setting-group">
-            <span>Fit</span>
-            <div className="segmented">
-              {(
-                [
-                  ['height', 'Height'],
-                  ['width', 'Width'],
-                  ['original', 'Original'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  className={settings.fit === value ? 'on' : ''}
-                  onClick={() => changeSettings({ fit: value })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* compact status line, visible while the bars are hidden */}
+      {!showUi && chapter && (
+        <div className="reader-status">
+          Ch. {chapterIndex + 1}/{chapters.length} · Pg. {page + 1}/{total} ·{' '}
+          {Math.round(percentNow * 100)}%
         </div>
       )}
 
@@ -256,13 +223,17 @@ export default function Reader() {
           onToggleUi={() => setShowUi((v) => !v)}
         />
       ) : (
-        <div className="reader-stage">
+        <div className="reader-stage" onTouchStart={onTouchStartStage} onTouchEnd={onTouchEndStage}>
           <div
             className="tap-zone left"
             aria-label={rtl ? 'Next page' : 'Previous page'}
             onClick={() => goTo(rtl ? page + 1 : page - 1)}
           />
-          <div className="tap-zone center" aria-label="Toggle controls" onClick={() => setShowUi((v) => !v)} />
+          <div
+            className="tap-zone center"
+            aria-label="Toggle controls"
+            onClick={() => setShowUi((v) => !v)}
+          />
           <div
             className="tap-zone right"
             aria-label={rtl ? 'Previous page' : 'Next page'}
@@ -308,7 +279,9 @@ export default function Reader() {
           />
         )}
         <span className="page-counter">
-          {page + 1}<em>/</em>{total}
+          {page + 1}
+          <em>/</em>
+          {total}
         </span>
         <button
           className="icon-button"
@@ -318,7 +291,88 @@ export default function Reader() {
         >
           ⏭
         </button>
+        <button
+          className="icon-button"
+          aria-label="Chapter list"
+          onClick={() => setSheet((s) => (s === 'chapters' ? 'none' : 'chapters'))}
+        >
+          ☰
+        </button>
+        <button
+          className="icon-button"
+          aria-label="Reader settings"
+          onClick={() => setSheet((s) => (s === 'settings' ? 'none' : 'settings'))}
+        >
+          ⚙
+        </button>
       </footer>
+
+      {sheet !== 'none' && <div className="sheet-scrim" onClick={() => setSheet('none')} />}
+
+      {sheet === 'settings' && (
+        <div className="sheet" role="dialog" aria-label="Reader settings">
+          <div className="sheet-handle" />
+          <div className="setting-group">
+            <span>Read mode</span>
+            <div className="segmented">
+              {(
+                [
+                  ['ltr', 'Standard'],
+                  ['rtl', 'Right-to-left'],
+                  ['webtoon', 'Webtoon'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  className={settings.mode === value ? 'on' : ''}
+                  onClick={() => changeSettings({ mode: value })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <span className="setting-note">Remembered for this manga</span>
+          </div>
+          <div className="setting-group">
+            <span>Fit</span>
+            <div className="segmented">
+              {(
+                [
+                  ['height', 'Height'],
+                  ['width', 'Width'],
+                  ['original', 'Original'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  className={settings.fit === value ? 'on' : ''}
+                  onClick={() => changeSettings({ fit: value })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sheet === 'chapters' && (
+        <div className="sheet chapters-sheet" role="dialog" aria-label="Chapters">
+          <div className="sheet-handle" />
+          <ol className="sheet-chapters">
+            {chapters.map((ch, i) => (
+              <li key={ch.id}>
+                <button
+                  className={i === chapterIndex ? 'current' : i < chapterIndex ? 'read' : ''}
+                  onClick={() => openChapter(ch)}
+                >
+                  {chapterLabel(ch)}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   )
 }
@@ -341,7 +395,6 @@ function WebtoonStage({
   const containerRef = useRef<HTMLDivElement>(null)
   const jumped = useRef(false)
 
-  // report the page crossing the middle of the viewport
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -359,7 +412,6 @@ function WebtoonStage({
     return () => observer.disconnect()
   }, [pages, onPageChange])
 
-  // one-time jump to the resume position
   useEffect(() => {
     if (jumped.current || initialPage === 0) return
     const el = containerRef.current?.querySelector(`[data-index="${initialPage}"]`)

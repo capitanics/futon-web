@@ -680,6 +680,214 @@ h2 {
   gap: 0.6rem;
 }
 
+/* ---------- reader: status line, sheets ---------- */
+
+.reader-manga-title {
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reader-chapter-label {
+  font-size: 0.82rem;
+  color: var(--washi-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reader-status {
+  position: fixed;
+  top: env(safe-area-inset-top);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--washi-dim);
+  background: rgba(8, 8, 11, 0.7);
+  padding: 0.15rem 0.7rem;
+  border-radius: 0 0 8px 8px;
+  pointer-events: none;
+}
+
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--ink-raised);
+  border-radius: 18px 18px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 0.6rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  animation: sheetup 0.18s ease;
+  max-height: 70dvh;
+  overflow-y: auto;
+}
+
+@keyframes sheetup {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (min-width: 720px) {
+  .sheet {
+    left: auto;
+    right: 1rem;
+    bottom: 4.2rem;
+    width: 360px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+}
+
+.sheet-handle {
+  width: 42px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 0 auto;
+}
+
+.setting-note {
+  font-size: 0.72rem;
+  color: var(--washi-dim);
+}
+
+.sheet-chapters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sheet-chapters button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--washi);
+  font-size: 0.92rem;
+  padding: 0.65rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.sheet-chapters button.read {
+  color: var(--washi-dim);
+}
+
+.sheet-chapters button.current {
+  color: var(--shu);
+  font-weight: 700;
+}
+
+/* ---------- library: search, buckets, fab ---------- */
+
+.search-pill {
+  width: 100%;
+  background: var(--ink-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--washi);
+  font-family: var(--ui);
+  font-size: 1rem;
+  padding: 0.65rem 1.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.bucket {
+  margin: 1.4rem 0 0;
+  font-size: 0.85rem;
+  text-transform: none;
+}
+
+.fab {
+  position: fixed;
+  right: 1.1rem;
+  bottom: calc(1.1rem + env(safe-area-inset-bottom));
+  z-index: 20;
+  background: var(--shu);
+  color: var(--shu-ink);
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- bottom nav (mobile) ---------- */
+
+.bottomnav {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .topbar nav {
+    display: none;
+  }
+
+  .bottomnav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    background: var(--ink-overlay);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottomnav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    padding: 0.5rem 0 0.6rem;
+    font-size: 0.72rem;
+    color: var(--washi-dim);
+  }
+
+  .bottomnav a.active {
+    color: var(--shu);
+  }
+
+  .bottomnav-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .layout main {
+    padding-bottom: calc(3.6rem + env(safe-area-inset-bottom));
+  }
+
+  .fab {
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+  /* reader is fullscreen and outside .layout, keep its own spacing */
+}
+
 /* small screens: hero stacks, nav condenses */
 
 @media (max-width: 560px) {

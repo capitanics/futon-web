@@ -21,6 +21,11 @@ class CacheDb(path: String) {
 
     init {
         conn.createStatement().use { st ->
+            st.executeQuery("PRAGMA journal_mode=WAL").close()
+            st.executeUpdate("PRAGMA synchronous=NORMAL")
+            st.executeUpdate("PRAGMA busy_timeout=5000")
+        }
+        conn.createStatement().use { st ->
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS manga(
@@ -166,8 +171,23 @@ class CacheDb(path: String) {
         deletedAt = getLong("deleted_at"),
     )
 
+    /** Runs [block] in a single transaction — one fsync instead of one per row. */
+    private inline fun <T> transaction(block: () -> T): T {
+        conn.autoCommit = false
+        try {
+            val result = block()
+            conn.commit()
+            return result
+        } catch (e: Throwable) {
+            conn.rollback()
+            throw e
+        } finally {
+            conn.autoCommit = true
+        }
+    }
+
     @Synchronized
-    fun upsertManga(manga: Manga) {
+    fun upsertManga(manga: Manga) = transaction {
         conn.prepareStatement(
             """
             INSERT INTO manga(id, source, url, public_url, title, alt_titles, cover_url,
@@ -198,7 +218,7 @@ class CacheDb(path: String) {
         manga.chapters?.let { replaceChapters(manga.id, it) }
     }
 
-    @Synchronized
+    // always called inside upsertManga's transaction
     private fun replaceChapters(mangaId: Long, chapters: List<MangaChapter>) {
         conn.prepareStatement("DELETE FROM chapters WHERE manga_id=?").use {
             it.setLong(1, mangaId)

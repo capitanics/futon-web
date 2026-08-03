@@ -1,5 +1,6 @@
 package dev.futonweb.api
 
+import dev.futonweb.ImageCache
 import dev.futonweb.db.CacheDb
 import dev.futonweb.parsers.ParsersService
 import dev.futonweb.sync.SyncClient
@@ -18,7 +19,12 @@ import okhttp3.Request
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.requireBody
 
-fun Route.apiRoutes(service: ParsersService, db: CacheDb, sync: SyncClient?) = route("/api") {
+fun Route.apiRoutes(
+    service: ParsersService,
+    db: CacheDb,
+    sync: SyncClient?,
+    images: ImageCache,
+) = route("/api") {
 
     get("/health") {
         call.respond(
@@ -87,8 +93,16 @@ fun Route.apiRoutes(service: ParsersService, db: CacheDb, sync: SyncClient?) = r
 
     get("/manga/{id}") {
         val id = call.parameters["id"]!!.toLong()
-        val details = service.details(id)
-        call.respond(details.toDto(withChapters = true))
+        val refresh = call.request.queryParameters["refresh"] == "true"
+        // stale-while-revalidate: cached copy answers instantly, the source
+        // is re-scraped in the background
+        val cached = if (refresh) null else service.cachedDetails(id)
+        if (cached != null) {
+            service.refreshDetailsAsync(id)
+            call.respond(cached.toDto(withChapters = true))
+        } else {
+            call.respond(service.details(id).toDto(withChapters = true))
+        }
     }
 
     get("/chapters/{id}/pages") {
@@ -105,7 +119,7 @@ fun Route.apiRoutes(service: ParsersService, db: CacheDb, sync: SyncClient?) = r
         val chapterId = call.parameters["chapterId"]!!.toLong()
         val index = call.parameters["index"]!!.toInt()
         val (imageUrl, source) = service.pageImageUrl(chapterId, index)
-        call.proxyImage(service, imageUrl, source)
+        call.proxyImage(service, images, imageUrl, source)
     }
 
     // covers and other absolute image urls (hotlink-protected CDNs)
@@ -116,7 +130,7 @@ fun Route.apiRoutes(service: ParsersService, db: CacheDb, sync: SyncClient?) = r
             return@get call.respond(HttpStatusCode.BadRequest, ErrorDtoCompat("absolute http(s) url required"))
         }
         val source = call.request.queryParameters["source"]?.let { service.source(it) }
-        call.proxyImage(service, url, source)
+        call.proxyImage(service, images, url, source)
     }
 }
 
@@ -125,10 +139,12 @@ private data class ErrorDtoCompat(val error: String)
 
 private suspend fun io.ktor.server.application.ApplicationCall.proxyImage(
     service: ParsersService,
+    images: ImageCache,
     imageUrl: String,
     source: org.koitharu.kotatsu.parsers.model.MangaParserSource?,
 ) {
-    run {
+    val cached = images.get(imageUrl)
+    val entry = cached ?: run {
         val request = Request.Builder()
             .url(imageUrl)
             .apply { source?.let { tag(MangaSource::class.java, it) } }
@@ -139,14 +155,16 @@ private suspend fun io.ktor.server.application.ApplicationCall.proxyImage(
         response.use {
             if (!it.isSuccessful) {
                 respond(HttpStatusCode.BadGateway, "Upstream ${it.code} for $imageUrl")
-                return@run
+                return
             }
             val body = it.requireBody()
-            val contentType = body.contentType()?.let { mt -> ContentType.parse(mt.toString()) }
-                ?: ContentType.Image.JPEG
-            respondOutputStream(contentType = contentType) {
-                body.byteStream().copyTo(this)
+            val contentType = body.contentType()?.toString() ?: "image/jpeg"
+            runInterruptible(Dispatchers.IO) {
+                images.put(imageUrl, contentType, body.byteStream())
             }
         }
+    }
+    respondOutputStream(contentType = ContentType.parse(entry.contentType)) {
+        entry.file.inputStream().use { fis -> fis.copyTo(this) }
     }
 }
