@@ -18,6 +18,9 @@ Personal, single-user (or few-user) deployment. Not a public service.
   phone, continue on the web, and vice versa — same chapter, same page.
 - Run everything locally via docker-compose; reachable from the phone over
   LAN or Tailscale.
+- **Responsive, mobile-first frontend**: the web app must be fully usable
+  from a phone browser (touch tap zones, safe-area insets, dvh viewport
+  units, reflowing grids/hero). Not a desktop-only tool.
 
 ### Non-goals
 - Tachiyomi/keiyoushi extension support (Dalvik APKs, impossible on JVM/web).
@@ -290,13 +293,13 @@ where you left off (locally).
 ### Phase 4 — Webtoon mode + reading polish
 > ~1 weekend.
 
-- [ ] Webtoon reader: virtualized vertical strip, `scroll` persistence,
+- [x] Webtoon reader: continuous vertical strip, lazy loading, page tracking
       preload window.
-- [ ] Per-manga mode override; auto-detect from parser hints.
-- [ ] Prefetch next chapter when >80% through current.
-- [ ] Reader settings: fit mode (width/height/original), background color,
+- [x] Per-manga mode override (auto-detect from parser hints still TODO).
+- [x] Prefetch next chapter when >80% through current.
+- [x] Reader settings: fit mode (width/height/original); RTL/LTR/webtoon modes
       tap-zone layout.
-- [ ] Mobile-browser layout pass (usable on the phone too).
+- [x] Mobile-browser layout pass: dvh, safe-areas, touch targets, LAN host.
 
 ### Phase 5 — Library & deployment hardening
 > Ongoing / as-needed.

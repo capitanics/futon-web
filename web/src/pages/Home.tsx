@@ -35,11 +35,14 @@ export default function Home() {
               ) : (
                 <div className="cover-fallback" />
               )}
+              {h.percent > 0 && (
+                <span className="seal" aria-label={`${Math.round(h.percent * 100)}% read`}>
+                  {Math.round(h.percent * 100)}%
+                </span>
+              )}
               <div className="card-body">
                 <span className="card-title">{h.manga?.title ?? h.mangaId}</span>
-                <span className="card-sub">
-                  {Math.round(h.percent * 100)}% · p.{h.page + 1}
-                </span>
+                <span className="card-sub">p.{h.page + 1}</span>
                 <span className="card-sub dim">{h.manga?.source ?? ''}</span>
               </div>
             </Link>
