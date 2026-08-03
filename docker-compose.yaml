@@ -37,7 +37,21 @@ services:
       db:
         condition: service_healthy
 
-  # futon-web backend joins here in Phase 5 (built locally until then)
+  futon-web:
+    build: .
+    container_name: futon-web-app
+    restart: unless-stopped
+    environment:
+      SYNC_SERVER_URL: http://syncserver:8080
+      SYNC_EMAIL: ${SYNC_EMAIL}
+      SYNC_PASSWORD: ${SYNC_PASSWORD}
+    ports:
+      - "${APP_PORT:-8090}:8081"
+    volumes:
+      - futon-data:/data
+    depends_on:
+      - syncserver
 
 volumes:
   kotatsu-db:
+  futon-data:

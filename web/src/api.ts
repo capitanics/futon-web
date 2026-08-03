@@ -54,6 +54,25 @@ async function get<T>(url: string): Promise<T> {
   return res.json()
 }
 
+export interface Category {
+  id: number
+  title: string
+  sortKey: number
+}
+
+export interface Favourite {
+  mangaId: string
+  categoryId: number
+  pinned: boolean
+  createdAt: number
+  manga: Manga | null
+}
+
+export interface FavouritesResponse {
+  categories: Category[]
+  favourites: Favourite[]
+}
+
 export interface HistoryEntry {
   mangaId: string
   chapterId: string
@@ -75,6 +94,13 @@ export const api = {
   manga: (id: string) => get<Manga>(`/api/manga/${id}`),
   pages: (chapterId: string) => get<Page[]>(`/api/chapters/${chapterId}/pages`),
   history: () => get<HistoryEntry[]>('/api/history'),
+  favourites: () => get<FavouritesResponse>('/api/favourites'),
+  putFavourite: (mangaId: string, favourite: boolean, categoryId?: number) =>
+    fetch(`/api/favourites/${mangaId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favourite, categoryId }),
+    }),
   putProgress: (
     mangaId: string,
     body: { chapterId: string; page: number; scroll: number; percent: number },

@@ -14,6 +14,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.http.content.singlePageApplication
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
@@ -72,6 +73,13 @@ fun main() {
         }
         routing {
             apiRoutes(service, db, sync, images)
+            // production: serve the built SPA (Docker sets WEB_DIST)
+            System.getenv("WEB_DIST")?.let { dist ->
+                singlePageApplication {
+                    filesPath = dist
+                    defaultPage = "index.html"
+                }
+            }
         }
     }.start(wait = true)
 }

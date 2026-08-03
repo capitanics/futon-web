@@ -58,6 +58,60 @@ fun Route.apiRoutes(
         call.respond(entries)
     }
 
+    get("/favourites") {
+        val categories = db.getCategories().map { CategoryDto(it.id, it.title, it.sortKey) }
+        val favourites = db.getFavourites().map { f ->
+            FavouriteDto(
+                mangaId = f.mangaId.toString(),
+                categoryId = f.categoryId,
+                pinned = f.pinned,
+                createdAt = f.createdAt,
+                manga = db.getManga(f.mangaId)?.toDto(),
+            )
+        }
+        call.respond(FavouritesResponseDto(categories, favourites))
+    }
+
+    put("/favourites/{mangaId}") {
+        val mangaId = call.parameters["mangaId"]!!.toLong()
+        val body = call.receive<FavouriteToggleDto>()
+        val now = System.currentTimeMillis()
+        val categories = db.getCategories()
+        val categoryId = body.categoryId
+            ?: categories.minByOrNull { it.sortKey }?.id
+            ?: run {
+                // no category anywhere yet: create the default one
+                val c = CacheDb.CategoryRecord(
+                    id = 1,
+                    createdAt = now,
+                    sortKey = 0,
+                    track = true,
+                    title = "Favourites",
+                    order = "NEWEST",
+                    deletedAt = 0,
+                    showInLib = true,
+                    dirty = true,
+                )
+                db.insertCategory(c)
+                c.id
+            }
+        val existing = db.getFavourites(includeDeleted = true)
+            .find { it.mangaId == mangaId && it.categoryId == categoryId }
+        db.writeFavourite(
+            CacheDb.FavouriteRecord(
+                mangaId = mangaId,
+                categoryId = categoryId,
+                sortKey = existing?.sortKey ?: 0,
+                pinned = existing?.pinned ?: false,
+                createdAt = if (body.favourite) now else (existing?.createdAt ?: now),
+                deletedAt = if (body.favourite) 0 else now,
+            ),
+            dirty = true,
+        )
+        sync?.requestSync()
+        call.respond(HttpStatusCode.NoContent)
+    }
+
     put("/history/{mangaId}") {
         val mangaId = call.parameters["mangaId"]!!.toLong()
         val body = call.receive<ProgressUpdateDto>()

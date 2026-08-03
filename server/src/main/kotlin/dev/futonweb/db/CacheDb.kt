@@ -82,8 +82,210 @@ class CacheDb(path: String) {
             st.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS sync_manga_json(manga_id INTEGER PRIMARY KEY, json TEXT NOT NULL)",
             )
+            st.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS categories(
+                    id INTEGER PRIMARY KEY,
+                    created_at INTEGER NOT NULL,
+                    sort_key INTEGER NOT NULL DEFAULT 0,
+                    track INTEGER NOT NULL DEFAULT 1,
+                    title TEXT NOT NULL,
+                    ord TEXT NOT NULL DEFAULT 'NEWEST',
+                    deleted_at INTEGER NOT NULL DEFAULT 0,
+                    show_in_lib INTEGER NOT NULL DEFAULT 1,
+                    dirty INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent(),
+            )
+            st.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS favourites(
+                    manga_id INTEGER NOT NULL,
+                    category_id INTEGER NOT NULL,
+                    sort_key INTEGER NOT NULL DEFAULT 0,
+                    pinned INTEGER NOT NULL DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    deleted_at INTEGER NOT NULL DEFAULT 0,
+                    dirty INTEGER NOT NULL DEFAULT 0,
+                    PRIMARY KEY(manga_id, category_id)
+                )
+                """.trimIndent(),
+            )
         }
     }
+
+    data class CategoryRecord(
+        val id: Int,
+        val createdAt: Long,
+        val sortKey: Int,
+        val track: Boolean,
+        val title: String,
+        val order: String,
+        val deletedAt: Long,
+        val showInLib: Boolean,
+        val dirty: Boolean = false,
+    )
+
+    data class FavouriteRecord(
+        val mangaId: Long,
+        val categoryId: Int,
+        val sortKey: Int,
+        val pinned: Boolean,
+        val createdAt: Long,
+        val deletedAt: Long,
+        val dirty: Boolean = false,
+    )
+
+    /** Server rows overwrite local ones unless the local row has unsynced web edits. */
+    @Synchronized
+    fun mergeCategoryFromServer(c: CategoryRecord) {
+        val dirty = conn.prepareStatement("SELECT dirty FROM categories WHERE id=?").use { ps ->
+            ps.setInt(1, c.id)
+            ps.executeQuery().use { rs -> rs.next() && rs.getInt(1) != 0 }
+        }
+        if (dirty) return
+        conn.prepareStatement(
+            """
+            INSERT INTO categories(id, created_at, sort_key, track, title, ord, deleted_at, show_in_lib, dirty)
+            VALUES(?,?,?,?,?,?,?,?,0)
+            ON CONFLICT(id) DO UPDATE SET created_at=excluded.created_at, sort_key=excluded.sort_key,
+                track=excluded.track, title=excluded.title, ord=excluded.ord,
+                deleted_at=excluded.deleted_at, show_in_lib=excluded.show_in_lib, dirty=0
+            """.trimIndent(),
+        ).use { ps ->
+            ps.setInt(1, c.id)
+            ps.setLong(2, c.createdAt)
+            ps.setInt(3, c.sortKey)
+            ps.setInt(4, if (c.track) 1 else 0)
+            ps.setString(5, c.title)
+            ps.setString(6, c.order)
+            ps.setLong(7, c.deletedAt)
+            ps.setInt(8, if (c.showInLib) 1 else 0)
+            ps.executeUpdate()
+        }
+    }
+
+    @Synchronized
+    fun mergeFavouriteFromServer(f: FavouriteRecord) {
+        val dirty = conn.prepareStatement(
+            "SELECT dirty FROM favourites WHERE manga_id=? AND category_id=?",
+        ).use { ps ->
+            ps.setLong(1, f.mangaId)
+            ps.setInt(2, f.categoryId)
+            ps.executeQuery().use { rs -> rs.next() && rs.getInt(1) != 0 }
+        }
+        if (dirty) return
+        writeFavourite(f, dirty = false)
+    }
+
+    @Synchronized
+    fun writeFavourite(f: FavouriteRecord, dirty: Boolean) {
+        conn.prepareStatement(
+            """
+            INSERT INTO favourites(manga_id, category_id, sort_key, pinned, created_at, deleted_at, dirty)
+            VALUES(?,?,?,?,?,?,?)
+            ON CONFLICT(manga_id, category_id) DO UPDATE SET sort_key=excluded.sort_key,
+                pinned=excluded.pinned, created_at=excluded.created_at,
+                deleted_at=excluded.deleted_at, dirty=excluded.dirty
+            """.trimIndent(),
+        ).use { ps ->
+            ps.setLong(1, f.mangaId)
+            ps.setInt(2, f.categoryId)
+            ps.setInt(3, f.sortKey)
+            ps.setInt(4, if (f.pinned) 1 else 0)
+            ps.setLong(5, f.createdAt)
+            ps.setLong(6, f.deletedAt)
+            ps.setInt(7, if (dirty) 1 else 0)
+            ps.executeUpdate()
+        }
+    }
+
+    @Synchronized
+    fun insertCategory(c: CategoryRecord) {
+        conn.prepareStatement(
+            "INSERT OR REPLACE INTO categories(id, created_at, sort_key, track, title, ord, deleted_at, show_in_lib, dirty) VALUES(?,?,?,?,?,?,?,?,?)",
+        ).use { ps ->
+            ps.setInt(1, c.id)
+            ps.setLong(2, c.createdAt)
+            ps.setInt(3, c.sortKey)
+            ps.setInt(4, if (c.track) 1 else 0)
+            ps.setString(5, c.title)
+            ps.setString(6, c.order)
+            ps.setLong(7, c.deletedAt)
+            ps.setInt(8, if (c.showInLib) 1 else 0)
+            ps.setInt(9, if (c.dirty) 1 else 0)
+            ps.executeUpdate()
+        }
+    }
+
+    @Synchronized
+    fun getCategories(includeDeleted: Boolean = false): List<CategoryRecord> =
+        conn.prepareStatement(
+            "SELECT * FROM categories ${if (includeDeleted) "" else "WHERE deleted_at=0"} ORDER BY sort_key",
+        ).use { ps ->
+            ps.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.toCategory()) } }
+        }
+
+    @Synchronized
+    fun getFavourites(includeDeleted: Boolean = false): List<FavouriteRecord> =
+        conn.prepareStatement(
+            "SELECT * FROM favourites ${if (includeDeleted) "" else "WHERE deleted_at=0"} ORDER BY created_at DESC",
+        ).use { ps ->
+            ps.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.toFavourite()) } }
+        }
+
+    @Synchronized
+    fun getDirtyFavourites(): List<FavouriteRecord> =
+        conn.prepareStatement("SELECT * FROM favourites WHERE dirty=1").use { ps ->
+            ps.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.toFavourite()) } }
+        }
+
+    @Synchronized
+    fun getDirtyCategories(): List<CategoryRecord> =
+        conn.prepareStatement("SELECT * FROM categories WHERE dirty=1").use { ps ->
+            ps.executeQuery().use { rs -> buildList { while (rs.next()) add(rs.toCategory()) } }
+        }
+
+    @Synchronized
+    fun clearFavouriteDirty(mangaId: Long, categoryId: Int) {
+        conn.prepareStatement(
+            "UPDATE favourites SET dirty=0 WHERE manga_id=? AND category_id=?",
+        ).use { ps ->
+            ps.setLong(1, mangaId)
+            ps.setInt(2, categoryId)
+            ps.executeUpdate()
+        }
+    }
+
+    @Synchronized
+    fun clearCategoryDirty(id: Int) {
+        conn.prepareStatement("UPDATE categories SET dirty=0 WHERE id=?").use { ps ->
+            ps.setInt(1, id)
+            ps.executeUpdate()
+        }
+    }
+
+    private fun ResultSet.toCategory() = CategoryRecord(
+        id = getInt("id"),
+        createdAt = getLong("created_at"),
+        sortKey = getInt("sort_key"),
+        track = getInt("track") != 0,
+        title = getString("title"),
+        order = getString("ord"),
+        deletedAt = getLong("deleted_at"),
+        showInLib = getInt("show_in_lib") != 0,
+        dirty = getInt("dirty") != 0,
+    )
+
+    private fun ResultSet.toFavourite() = FavouriteRecord(
+        mangaId = getLong("manga_id"),
+        categoryId = getInt("category_id"),
+        sortKey = getInt("sort_key"),
+        pinned = getInt("pinned") != 0,
+        createdAt = getLong("created_at"),
+        deletedAt = getLong("deleted_at"),
+        dirty = getInt("dirty") != 0,
+    )
 
     data class HistoryRecord(
         val mangaId: Long,

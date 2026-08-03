@@ -84,6 +84,34 @@ data class ProgressUpdateDto(
     val percent: Float = 0f,
 )
 
+@Serializable
+data class CategoryDto(
+    val id: Int,
+    val title: String,
+    val sortKey: Int,
+)
+
+@Serializable
+data class FavouriteDto(
+    val mangaId: String,
+    val categoryId: Int,
+    val pinned: Boolean,
+    val createdAt: Long,
+    val manga: MangaDto?,
+)
+
+@Serializable
+data class FavouritesResponseDto(
+    val categories: List<CategoryDto>,
+    val favourites: List<FavouriteDto>,
+)
+
+@Serializable
+data class FavouriteToggleDto(
+    val favourite: Boolean,
+    val categoryId: Int? = null,
+)
+
 fun MangaParserSource.toDto() = SourceDto(
     name = name,
     title = title,

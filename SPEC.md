@@ -304,14 +304,14 @@ where you left off (locally).
 ### Phase 5 — Library & deployment hardening
 > Ongoing / as-needed.
 
-- [ ] Favourites + categories sync (`/resource/favourites`, same LWW pattern);
-      favourites grid on Home.
+- [x] Favourites + categories sync (dirty-flag push, pull skips dirty rows);
+      Favorites tab with category filters; heart toggle on details.
 - [ ] Source management UI (enable/disable, ordering, locale filter).
-- [ ] futon-web Dockerfile (multi-stage: gradle build + web build → JRE 21
+- [x] futon-web Dockerfile (multi-stage: gradle build + web build → JRE 21
       slim), added to compose; single `docker compose up -d` brings up
       everything.
-- [ ] Tailscale note in README (serve/funnel for TLS if wanted).
-- [ ] Backup: nightly `mysqldump` + SQLite copy to a local path.
+- [x] Tailscale note in README (serve for TLS + chromeless PWA install).
+- [x] Backup: scripts/backup.sh (mysqldump + SQLite copy); cron example in README.
 - [ ] (Optional) FlareSolverr sidecar for Cloudflare-walled sources.
 
 ---

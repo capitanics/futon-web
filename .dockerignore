@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/build
+**/.gradle
+**/image-cache
+*.db
+*.db-*
+docs
+backups
+.git

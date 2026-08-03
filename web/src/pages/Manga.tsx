@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { api, coverUrl, type Chapter } from '../api'
 import { getHistory, type LocalHistory } from '../db'
@@ -19,8 +19,16 @@ export default function MangaPage() {
     queryFn: () => api.manga(mangaId!),
   })
   const serverHistory = useQuery({ queryKey: ['history'], queryFn: api.history })
+  const favourites = useQuery({ queryKey: ['favourites'], queryFn: api.favourites })
+  const queryClient = useQueryClient()
   const [localProgress, setLocalProgress] = useState<LocalHistory | undefined>()
   const [branch, setBranch] = useState<string | null | undefined>(undefined)
+
+  const isFavourite = favourites.data?.favourites.some((f) => f.mangaId === mangaId) ?? false
+  const toggleFavourite = async () => {
+    await api.putFavourite(mangaId!, !isFavourite)
+    await queryClient.invalidateQueries({ queryKey: ['favourites'] })
+  }
 
   useEffect(() => {
     if (mangaId) getHistory(mangaId).then(setLocalProgress)
@@ -85,18 +93,28 @@ export default function MangaPage() {
                 ))}
               </div>
             )}
-            {progress && progressIndex >= 0 ? (
-              <Link
-                className="button"
-                to={`/read/${m.id}/${progress.chapterId}?page=${progress.page}`}
+            <div className="action-row">
+              {progress && progressIndex >= 0 ? (
+                <Link
+                  className="button"
+                  to={`/read/${m.id}/${progress.chapterId}?page=${progress.page}`}
+                >
+                  Continue · {chapterLabel(chapters[progressIndex])}, p.{progress.page + 1}
+                </Link>
+              ) : chapters.length > 0 ? (
+                <Link className="button" to={`/read/${m.id}/${chapters[0].id}`}>
+                  Start reading
+                </Link>
+              ) : null}
+              <button
+                className={`button ghost heart ${isFavourite ? 'on' : ''}`}
+                aria-pressed={isFavourite}
+                aria-label={isFavourite ? 'Remove from favorites' : 'Add to favorites'}
+                onClick={toggleFavourite}
               >
-                Continue · {chapterLabel(chapters[progressIndex])}, p.{progress.page + 1}
-              </Link>
-            ) : chapters.length > 0 ? (
-              <Link className="button" to={`/read/${m.id}/${chapters[0].id}`}>
-                Start reading
-              </Link>
-            ) : null}
+                {isFavourite ? '♥' : '♡'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

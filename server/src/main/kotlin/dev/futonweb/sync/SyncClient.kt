@@ -71,6 +71,12 @@ class SyncClient(
     }
 
     suspend fun syncNow(): Unit = mutex.withLock {
+        syncHistoryResource()
+        syncFavouritesResource()
+        lastSyncAt = System.currentTimeMillis()
+    }
+
+    private suspend fun syncHistoryResource() {
         val server = pull()
         // remember raw manga payloads and index metadata for rendering
         for (h in server.history) {
@@ -102,7 +108,32 @@ class SyncClient(
                 db.mergeHistory(h.toRecord())
             }
         }
-        lastSyncAt = System.currentTimeMillis()
+    }
+
+    private suspend fun syncFavouritesResource() {
+        val server = pullFavourites()
+        for (c in server.categories) {
+            db.mergeCategoryFromServer(c.toRecord())
+        }
+        for (f in server.favourites) {
+            db.saveSyncMangaJson(f.mangaId, json.encodeToString(SyncManga.serializer(), f.manga))
+            if (db.getManga(f.mangaId) == null) {
+                f.manga.toParserManga()?.let { db.upsertManga(it) }
+            }
+            db.mergeFavouriteFromServer(f.toRecord())
+        }
+        val dirtyCategories = db.getDirtyCategories()
+        val dirtyFavourites = db.getDirtyFavourites()
+        if (dirtyCategories.isEmpty() && dirtyFavourites.isEmpty()) return
+        log.info("pushing ${dirtyFavourites.size} favourite(s), ${dirtyCategories.size} categorie(s)")
+        val payload = SyncFavouritesPackage(
+            categories = dirtyCategories.map { it.toSync() },
+            favourites = dirtyFavourites.mapNotNull { it.toSyncFavourite() },
+            timestamp = System.currentTimeMillis(),
+        )
+        postFavourites(payload)
+        dirtyCategories.forEach { db.clearCategoryDirty(it.id) }
+        dirtyFavourites.forEach { db.clearFavouriteDirty(it.mangaId, it.categoryId) }
     }
 
     // ---- protocol ----
@@ -171,6 +202,41 @@ class SyncClient(
 
     private class Box(val value: SyncHistoryPackage?)
 
+    private suspend fun pullFavourites(): SyncFavouritesPackage = withAuth { t ->
+        val request = Request.Builder()
+            .url("$baseUrl/resource/favourites")
+            .header("Authorization", "Bearer $t")
+            .build()
+        val response = runInterruptible(Dispatchers.IO) { http.newCall(request).execute() }
+        response.use {
+            when {
+                it.code == 401 -> null
+                it.isSuccessful ->
+                    json.decodeFromString(SyncFavouritesPackage.serializer(), it.body.string())
+                else -> error("favourites pull failed: HTTP ${it.code}")
+            }
+        }
+    } ?: error("authentication rejected")
+
+    private suspend fun postFavourites(payload: SyncFavouritesPackage) {
+        withAuth { t ->
+            val body = json.encodeToString(SyncFavouritesPackage.serializer(), payload)
+            val request = Request.Builder()
+                .url("$baseUrl/resource/favourites")
+                .header("Authorization", "Bearer $t")
+                .post(body.toRequestBody(jsonMedia))
+                .build()
+            val response = runInterruptible(Dispatchers.IO) { http.newCall(request).execute() }
+            response.use {
+                when {
+                    it.code == 401 -> null
+                    it.isSuccessful || it.code == 204 -> Unit
+                    else -> error("favourites push failed: HTTP ${it.code}")
+                }
+            }
+        } ?: error("authentication rejected")
+    }
+
     // ---- mapping ----
 
     private fun SyncHistory.toRecord() = CacheDb.HistoryRecord(
@@ -206,6 +272,58 @@ class SyncClient(
             deletedAt = deletedAt,
         )
     }
+
+    private fun SyncCategory.toRecord() = CacheDb.CategoryRecord(
+        id = id,
+        createdAt = createdAt,
+        sortKey = sortKey,
+        track = track,
+        title = title,
+        order = order,
+        deletedAt = deletedAt,
+        showInLib = showInLib,
+    )
+
+    private fun CacheDb.CategoryRecord.toSync() = SyncCategory(
+        id = id,
+        createdAt = createdAt,
+        sortKey = sortKey,
+        track = track,
+        title = title,
+        order = order,
+        deletedAt = deletedAt,
+        showInLib = showInLib,
+    )
+
+    private fun SyncFavourite.toRecord() = CacheDb.FavouriteRecord(
+        mangaId = mangaId,
+        categoryId = categoryId,
+        sortKey = sortKey,
+        pinned = pinned,
+        createdAt = createdAt,
+        deletedAt = deletedAt,
+    )
+
+    private fun CacheDb.FavouriteRecord.toSyncFavourite(): SyncFavourite? {
+        val manga = mangaPayload(mangaId) ?: run {
+            log.warn("no manga payload for favourite $mangaId, skipping push")
+            return null
+        }
+        return SyncFavourite(
+            mangaId = mangaId,
+            manga = manga,
+            categoryId = categoryId,
+            sortKey = sortKey,
+            pinned = pinned,
+            createdAt = createdAt,
+            deletedAt = deletedAt,
+        )
+    }
+
+    private fun mangaPayload(mangaId: Long): SyncManga? =
+        db.getSyncMangaJson(mangaId)
+            ?.let { runCatching { json.decodeFromString(SyncManga.serializer(), it) }.getOrNull() }
+            ?: db.getManga(mangaId)?.toSyncManga()
 
     private fun Manga.toSyncManga() = SyncManga(
         mangaId = id,

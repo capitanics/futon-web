@@ -52,6 +52,36 @@ data class SyncHistoryPackage(
 )
 
 @Serializable
+data class SyncCategory(
+    @SerialName("category_id") val id: Int,
+    @SerialName("created_at") val createdAt: Long,
+    @SerialName("sort_key") val sortKey: Int,
+    val track: Boolean = true,
+    val title: String,
+    val order: String = "NEWEST",
+    @SerialName("deleted_at") val deletedAt: Long = 0,
+    @SerialName("show_in_lib") val showInLib: Boolean = true,
+)
+
+@Serializable
+data class SyncFavourite(
+    @SerialName("manga_id") val mangaId: Long,
+    val manga: SyncManga,
+    @SerialName("category_id") val categoryId: Int,
+    @SerialName("sort_key") val sortKey: Int = 0,
+    val pinned: Boolean = false,
+    @SerialName("created_at") val createdAt: Long,
+    @SerialName("deleted_at") val deletedAt: Long = 0,
+)
+
+@Serializable
+data class SyncFavouritesPackage(
+    @SerialName("categories") val categories: List<SyncCategory>,
+    val favourites: List<SyncFavourite>,
+    val timestamp: Long? = null,
+)
+
+@Serializable
 data class AuthRequest(val email: String, val password: String)
 
 @Serializable

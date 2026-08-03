@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Home from './pages/Home'
 import Browse from './pages/Browse'
+import Favorites from './pages/Favorites'
 import MangaPage from './pages/Manga'
 import Reader from './pages/Reader'
 import Layout from './Layout'
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/browse', element: <Browse /> },
+      { path: '/favorites', element: <Favorites /> },
       { path: '/manga/:mangaId', element: <MangaPage /> },
     ],
   },
