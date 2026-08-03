@@ -261,12 +261,12 @@ page images through the proxy; ID-parity test passes.
 ### Phase 2 — Reader MVP (frontend)
 > ~1–2 weekends. The biggest UI effort.
 
-- [ ] Vite + React + TS scaffold, served by Ktor in prod, Vite proxy in dev.
-- [ ] Browse/search screen (single source is fine at this point).
-- [ ] Details screen with chapter list.
-- [ ] Paged reader: preload ±2, keyboard + click-zone nav, page slider,
+- [x] Vite + React + TS scaffold, served by Ktor in prod, Vite proxy in dev.
+- [x] Browse/search screen (source picker with filter, search, cover grid).
+- [x] Details screen with chapter list, read markers, continue button.
+- [x] Paged reader: preload ±2, keyboard + click-zone nav, page slider,
       loading/error states per page.
-- [ ] Local-only progress in IndexedDB (no sync yet): resume works across
+- [x] Local-only progress in IndexedDB (no sync yet): resume works across
       browser reloads.
 
 **Exit criteria:** read a full chapter comfortably in the browser and resume
