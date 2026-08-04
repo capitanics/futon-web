@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, useRouteError } from 'react-router-dom'
 import Home from './pages/Home'
 import Browse from './pages/Browse'
 import Favorites from './pages/Favorites'
@@ -19,9 +19,30 @@ const queryClient = new QueryClient({
   },
 })
 
+function ErrorPage() {
+  const error = useRouteError()
+  const message =
+    error instanceof Error ? error.message : 'Something unexpected happened.'
+  return (
+    <div className="page crash-page">
+      <h1>Something broke</h1>
+      <p className="dim">{message}</p>
+      <div className="action-row">
+        <a className="button" href="/">
+          Back to library
+        </a>
+        <button className="button ghost" onClick={() => location.reload()}>
+          Reload
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const router = createBrowserRouter([
   {
     element: <Layout />,
+    errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <Home /> },
       { path: '/browse', element: <Browse /> },
@@ -30,7 +51,7 @@ const router = createBrowserRouter([
     ],
   },
   // reader is fullscreen, outside the chrome
-  { path: '/read/:mangaId/:chapterId', element: <Reader /> },
+  { path: '/read/:mangaId/:chapterId', element: <Reader />, errorElement: <ErrorPage /> },
 ])
 
 createRoot(document.getElementById('root')!).render(

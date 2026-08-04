@@ -962,3 +962,11 @@ h2 {
     font-size: 0.88rem;
   }
 }
+
+.crash-page {
+  min-height: 60dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}

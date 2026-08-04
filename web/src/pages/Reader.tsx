@@ -45,6 +45,17 @@ export default function Reader() {
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const fullscreen = useFullscreen()
 
+  // reset synchronously on chapter change: an effect runs one frame too
+  // late when the next chapter's pages are already in the query cache,
+  // leaving a stale (possibly out-of-range) page index for that render
+  const [prevChapterId, setPrevChapterId] = useState(chapterId)
+  if (chapterId !== prevChapterId) {
+    setPrevChapterId(chapterId)
+    setPage(Number(params.get('page') ?? 0) || 0)
+    setFailed({})
+    setSheet('none')
+  }
+
   const manga = useQuery({ queryKey: ['manga', mangaId], queryFn: () => api.manga(mangaId!) })
   const pages = useQuery({ queryKey: ['pages', chapterId], queryFn: () => api.pages(chapterId!) })
 
@@ -58,17 +69,13 @@ export default function Reader() {
   const chapterIndex = chapters.findIndex((c) => c.id === chapterId)
   const total = pages.data?.length ?? 0
   const rtl = settings.mode === 'rtl'
+  // never index past the chapter: a synced resume position can exceed the
+  // page count this source actually returns
+  const safePage = total > 0 ? Math.min(Math.max(page, 0), total - 1) : 0
   const percentNow =
     chapters.length > 0 && total > 0
-      ? Math.min(1, (chapterIndex + (page + 1) / total) / chapters.length)
+      ? Math.min(1, (chapterIndex + (safePage + 1) / total) / chapters.length)
       : 0
-
-  useEffect(() => {
-    setPage(Number(params.get('page') ?? 0) || 0)
-    setFailed({})
-    setSheet('none')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterId])
 
   const openChapter = useCallback(
     (ch: Chapter, atPage = 0) => {
@@ -113,7 +120,7 @@ export default function Reader() {
     void saveProgress({
       mangaId: m.id,
       chapterId: chapter.id,
-      page,
+      page: safePage,
       scroll: 0,
       percent: percentNow,
       title: m.title,
@@ -122,23 +129,23 @@ export default function Reader() {
       chapterLabel: chapterLabel(chapter),
     })
     const t = setTimeout(() => {
-      void api.putProgress(m.id, { chapterId: chapter.id, page, scroll: 0, percent: percentNow })
+      void api.putProgress(m.id, { chapterId: chapter.id, page: safePage, scroll: 0, percent: percentNow })
     }, 1500)
     return () => clearTimeout(t)
-  }, [manga.data, chapter, page, total, percentNow])
+  }, [manga.data, chapter, safePage, total, percentNow])
 
   // keyboard: arrows follow reading direction, space always advances
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === ' ') {
         e.preventDefault()
-        goTo(page + 1)
+        goTo(safePage + 1)
       } else if (e.key === 'ArrowRight') {
         e.preventDefault()
-        goTo(rtl ? page - 1 : page + 1)
+        goTo(rtl ? safePage - 1 : safePage + 1)
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault()
-        goTo(rtl ? page + 1 : page - 1)
+        goTo(rtl ? safePage + 1 : safePage - 1)
       } else if (e.key === 'f') {
         fullscreen.toggle()
       } else if (e.key === 'Escape') {
@@ -148,7 +155,7 @@ export default function Reader() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goTo, page, rtl, mangaId, navigate, sheet, fullscreen])
+  }, [goTo, safePage, rtl, mangaId, navigate, sheet, fullscreen])
 
   // swipe left/right turns pages (paged modes); direction-aware like taps
   const onTouchStartStage = (e: React.TouchEvent) => {
@@ -163,24 +170,24 @@ export default function Reader() {
     const dx = t.clientX - start.x
     const dy = t.clientY - start.y
     if (Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy)) return
-    if (dx < 0) goTo(rtl ? page - 1 : page + 1)
-    else goTo(rtl ? page + 1 : page - 1)
+    if (dx < 0) goTo(rtl ? safePage - 1 : safePage + 1)
+    else goTo(rtl ? safePage + 1 : safePage - 1)
   }
 
   // preload neighbours (paged mode)
   useEffect(() => {
     if (settings.mode === 'webtoon' || !pages.data) return
-    ;[page + 1, page + 2, page - 1]
+    ;[safePage + 1, safePage + 2, safePage - 1]
       .filter((i) => i >= 0 && i < pages.data.length)
       .forEach((i) => {
         const img = new Image()
         img.src = pages.data[i].imageUrl
       })
-  }, [pages.data, page, settings.mode])
+  }, [pages.data, safePage, settings.mode])
 
   // near the end of the chapter: prefetch the next one
   useEffect(() => {
-    if (!pages.data || total === 0 || page / total < 0.8) return
+    if (!pages.data || total === 0 || safePage / total < 0.8) return
     const next = chapters[chapterIndex + 1]
     if (!next) return
     void queryClient
@@ -194,7 +201,7 @@ export default function Reader() {
             img.src = p.imageUrl
           })
       })
-  }, [page, total, chapters, chapterIndex, pages.data, queryClient])
+  }, [safePage, total, chapters, chapterIndex, pages.data, queryClient])
 
   if (manga.isError || pages.isError) {
     const err = (manga.error ?? pages.error) as Error
@@ -235,7 +242,7 @@ export default function Reader() {
       {/* compact status line, visible while the bars are hidden */}
       {!showUi && chapter && (
         <div className="reader-status">
-          Ch. {chapterIndex + 1}/{chapters.length} · Pg. {page + 1}/{total} ·{' '}
+          Ch. {chapterIndex + 1}/{chapters.length} · Pg. {safePage + 1}/{total} ·{' '}
           {Math.round(percentNow * 100)}%
         </div>
       )}
@@ -254,7 +261,7 @@ export default function Reader() {
           <div
             className="tap-zone left"
             aria-label={rtl ? 'Next page' : 'Previous page'}
-            onClick={() => goTo(rtl ? page + 1 : page - 1)}
+            onClick={() => goTo(rtl ? safePage + 1 : safePage - 1)}
           />
           <div
             className="tap-zone center"
@@ -264,22 +271,22 @@ export default function Reader() {
           <div
             className="tap-zone right"
             aria-label={rtl ? 'Previous page' : 'Next page'}
-            onClick={() => goTo(rtl ? page - 1 : page + 1)}
+            onClick={() => goTo(rtl ? safePage - 1 : safePage + 1)}
           />
-          {failed[page] ? (
+          {failed[safePage] ? (
             <div className="page-error">
-              <p>Page {page + 1} failed to load</p>
-              <button className="button" onClick={() => setFailed((f) => ({ ...f, [page]: false }))}>
+              <p>Page {safePage + 1} failed to load</p>
+              <button className="button" onClick={() => setFailed((f) => ({ ...f, [safePage]: false }))}>
                 Retry
               </button>
             </div>
           ) : (
             <img
-              key={pages.data[page].imageUrl}
+              key={pages.data[safePage].imageUrl}
               className="reader-page"
-              src={pages.data[page].imageUrl}
-              alt={`Page ${page + 1}`}
-              onError={() => setFailed((f) => ({ ...f, [page]: true }))}
+              src={pages.data[safePage].imageUrl}
+              alt={`Page ${safePage + 1}`}
+              onError={() => setFailed((f) => ({ ...f, [safePage]: true }))}
             />
           )}
         </div>
@@ -300,13 +307,13 @@ export default function Reader() {
             dir={rtl ? 'rtl' : 'ltr'}
             min={0}
             max={Math.max(0, total - 1)}
-            value={page}
+            value={safePage}
             aria-label="Page"
             onChange={(e) => setPage(Number(e.target.value))}
           />
         )}
         <span className="page-counter">
-          {page + 1}
+          {safePage + 1}
           <em>/</em>
           {total}
         </span>
