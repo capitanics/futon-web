@@ -96,36 +96,15 @@ h2 {
   z-index: 10;
 }
 
-/* aligns the bar content with the .page column below it */
+/* nav-only bar, centered tabs */
 .topbar-inner {
   max-width: 1100px;
   margin: 0 auto;
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  font-weight: 500;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
-}
-
-.brand img {
-  border-radius: 6px;
-  display: block;
-}
-
-.topbar nav {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  height: 100%;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .topbar nav a {
@@ -903,7 +882,8 @@ h2 {
 }
 
 @media (max-width: 640px) {
-  .topbar nav {
+  /* mobile navigates via the bottom bar only */
+  .topbar {
     display: none;
   }
 

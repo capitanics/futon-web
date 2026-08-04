@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 
 const tabs = [
   { to: '/', label: 'History', icon: '◷' },
@@ -10,19 +10,13 @@ export default function Layout() {
   return (
     <div className="layout">
       <header className="topbar">
-        <div className="topbar-inner">
-          <Link to="/" className="brand">
-            <img src="/icon.svg" alt="" width={26} height={26} />
-            Futon
-          </Link>
-          <nav>
-            {tabs.map((t) => (
-              <NavLink key={t.to} to={t.to} end={t.to === '/'}>
-                {t.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+        <nav className="topbar-inner">
+          {tabs.map((t) => (
+            <NavLink key={t.to} to={t.to} end={t.to === '/'}>
+              {t.label}
+            </NavLink>
+          ))}
+        </nav>
       </header>
       <main>
         <Outlet />
