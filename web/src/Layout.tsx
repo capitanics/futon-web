@@ -10,16 +10,19 @@ export default function Layout() {
   return (
     <div className="layout">
       <header className="topbar">
-        <Link to="/" className="brand">
-          futon<span>web</span>
-        </Link>
-        <nav>
-          {tabs.map((t) => (
-            <NavLink key={t.to} to={t.to} end={t.to === '/'}>
-              {t.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="topbar-inner">
+          <Link to="/" className="brand">
+            <img src="/icon.svg" alt="" width={26} height={26} />
+            Futon
+          </Link>
+          <nav>
+            {tabs.map((t) => (
+              <NavLink key={t.to} to={t.to} end={t.to === '/'}>
+                {t.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       </header>
       <main>
         <Outlet />
