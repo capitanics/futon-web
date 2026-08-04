@@ -26,8 +26,8 @@ kotlin {
 val ktorVersion = "3.2.3"
 
 dependencies {
-    // pinned to the exact commit Futon ships with (see docs/notes.md)
-    implementation("com.github.clquwu:kotatsu-parsers-redo:f287c414a6")
+    // kotatsu-redo parsers, pinned by commit; bump with scripts/update-parsers.sh
+    implementation("com.github.kotatsu-redo:kotatsu-parsers-redo:204c9ee032")
 
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
