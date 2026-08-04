@@ -505,6 +505,22 @@ h2 {
   flex: 1;
   accent-color: var(--shu);
   min-height: 44px; /* touch target */
+  min-width: 0; /* allow shrinking below the browser's intrinsic width */
+}
+
+/* portrait phones: slider gets its own row, buttons spread underneath */
+@media (max-width: 560px) {
+  .reader-bar.bottom {
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    gap: 0 0.25rem;
+  }
+
+  .reader-bar.bottom input[type='range'] {
+    flex: 1 1 100%;
+    order: -1;
+    min-height: 36px;
+  }
 }
 
 .page-counter {

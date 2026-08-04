@@ -7,6 +7,29 @@ import { getReaderSettings, saveReaderSettings, type ReaderSettings } from '../s
 import { useFullscreen } from '../useFullscreen'
 import { chapterLabel } from './Manga'
 
+// inline SVGs: glyphs like U+1F5D7 render as tofu on Android
+function FullscreenIcon({ exit }: { exit?: boolean }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {exit ? (
+        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+      ) : (
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+      )}
+    </svg>
+  )
+}
+
 export default function Reader() {
   const { mangaId, chapterId } = useParams<{ mangaId: string; chapterId: string }>()
   const [params] = useSearchParams()
@@ -301,7 +324,7 @@ export default function Reader() {
             aria-label={fullscreen.isFullscreen ? 'Exit full screen' : 'Full screen'}
             onClick={fullscreen.toggle}
           >
-            {fullscreen.isFullscreen ? '🗗' : '⛶'}
+            <FullscreenIcon exit={fullscreen.isFullscreen} />
           </button>
         )}
         <button
